@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import AnimatedNumber from "./AnimatedNumber";
+import { shortHash } from "@/lib/api";
 
 interface ExecutiveSummaryProps {
   tvl: number;
@@ -9,6 +10,8 @@ interface ExecutiveSummaryProps {
   paid: number;
   issued: number;
   presented: number;
+  receiptsAnchored?: number;
+  latestReceiptRoot?: string | null;
 }
 
 export default function ExecutiveSummary({
@@ -17,35 +20,40 @@ export default function ExecutiveSummary({
   paid,
   issued,
   presented,
+  receiptsAnchored = 0,
+  latestReceiptRoot = null,
 }: ExecutiveSummaryProps) {
   const successRate = issued > 0 ? Math.round((paid / issued) * 100) : 0;
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard
         label="Protocol TVL"
         value={tvl}
         unit="mUSD"
-        delta="Accruing fees"
+        delta="Self-custodial vault"
         deltaPositive
         delay={0}
-        sparkSeed={tvl}
       />
       <MetricCard
-        label="Total Volume Settled"
+        label="Volume Settled"
         value={volumeSettled}
         unit="mUSD"
-        delta={`+${paid} settled`}
+        delta={`${paid} invoices paid`}
         deltaPositive
-        delay={0.08}
-        sparkSeed={volumeSettled}
+        delay={0.06}
+      />
+      <ReceiptsCard
+        receipts={receiptsAnchored}
+        latestRoot={latestReceiptRoot}
+        delay={0.12}
       />
       <SuccessRateCard
         paid={paid}
         issued={issued}
         presented={presented}
         successRate={successRate}
-        delay={0.16}
+        delay={0.18}
       />
     </section>
   );
@@ -65,7 +73,6 @@ function MetricCard({
   delta: string;
   deltaPositive: boolean;
   delay: number;
-  sparkSeed: number;
 }) {
   return (
     <motion.div
@@ -103,6 +110,61 @@ function MetricCard({
           >
             {deltaPositive ? "▲" : "▼"} {delta}
           </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function ReceiptsCard({
+  receipts,
+  latestRoot,
+  delay,
+}: {
+  receipts: number;
+  latestRoot: string | null;
+  delay: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden bg-white rounded-2xl border border-zinc-200/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] transition-shadow"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/40 pointer-events-none" />
+
+      <div className="relative">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+            Cryptographic Receipts
+          </p>
+          <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200/80 rounded-full px-1.5 py-0.5">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            ANCHORED
+          </span>
+        </div>
+        <div className="mt-3 flex items-baseline gap-1.5">
+          <AnimatedNumber
+            value={receipts}
+            decimals={0}
+            duration={800}
+            className="text-3xl font-bold tracking-tight text-zinc-900 font-[family-name:var(--font-jetbrains)] tabular-nums"
+          />
+          <span className="text-sm font-semibold text-zinc-400">on-chain</span>
+        </div>
+        <div className="mt-3">
+          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1">
+            Latest Merkle Root
+          </p>
+          <p
+            title={latestRoot ?? undefined}
+            className="text-[11px] font-[family-name:var(--font-jetbrains)] text-zinc-700 truncate tabular-nums"
+          >
+            {shortHash(latestRoot, 10, 6)}
+          </p>
         </div>
       </div>
     </motion.div>
@@ -155,7 +217,6 @@ function SuccessRateCard({
           <span className="text-sm font-semibold text-zinc-400">Paid</span>
         </div>
 
-        {/* Progress bar - fill animates with state changes */}
         <div className="mt-4">
           <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden relative">
             <motion.div
@@ -170,7 +231,7 @@ function SuccessRateCard({
               {presented} pending
             </span>
             <span className="font-[family-name:var(--font-jetbrains)] tabular-nums">
-              {issued - paid - presented} issued
+              {Math.max(0, issued - paid - presented)} issued
             </span>
           </div>
         </div>

@@ -4,12 +4,12 @@ import Header from "@/components/Header";
 import ExecutiveSummary from "@/components/ExecutiveSummary";
 import AgentEconomy from "@/components/AgentEconomy";
 import SettlementLedger from "@/components/SettlementLedger";
-import { useProtocolSimulation } from "@/hooks/useProtocolSimulation";
+import { useProtocolLive } from "@/hooks/useProtocolLive";
 
-export type { InvoiceStatus, FlowPhase } from "@/hooks/useProtocolSimulation";
+export type { InvoiceStatus, FlowPhase } from "@/hooks/useProtocolLive";
 
 export default function Home() {
-  const sim = useProtocolSimulation();
+  const sim = useProtocolLive();
 
   const issued = sim.invoices.length;
   const paid = sim.invoices.filter((i) => i.status === "Paid").length;
@@ -44,6 +44,8 @@ export default function Home() {
           paid={paid}
           issued={issued}
           presented={presented}
+          receiptsAnchored={sim.receiptsAnchored}
+          latestReceiptRoot={sim.latestReceiptRoot}
         />
 
         <AgentEconomy
@@ -59,10 +61,18 @@ export default function Home() {
         <SettlementLedger events={sim.invoices} />
 
         {/* Footer */}
-        <footer className="pt-6 pb-2 flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-200/60">
+        <footer className="pt-6 pb-2 flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-200/60 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>All systems operational · {issued} invoices tracked</span>
+            <div
+              className={`w-1.5 h-1.5 rounded-full ${
+                sim.online ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+              }`}
+            />
+            <span>
+              {sim.online ? "All systems operational" : "Reconnecting…"} ·{" "}
+              {sim.invoices.length} invoices tracked · {sim.receiptsAnchored} receipts
+              anchored
+            </span>
           </div>
           <div className="font-[family-name:var(--font-jetbrains)]">
             EMEI v0.1.0 · Mantle Sepolia · Chain 5003
