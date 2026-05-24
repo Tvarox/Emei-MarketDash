@@ -117,6 +117,34 @@ export const fetchStats = (signal?: AbortSignal) =>
 export const fetchEvents = (limit = 50, signal?: AbortSignal) =>
   fetchJSON<EventsResponse>(`/emei/public/events?limit=${limit}`, signal);
 
+/**
+ * Walk the events cursor (`next_before`) up to `maxPages` times, accumulating
+ * events newest-first. The API caps each response at 100 events regardless of
+ * the requested limit.
+ *
+ *   - `pageSize` is the per-request limit (capped at 100 server-side).
+ *   - `maxPages` bounds the total work; stops early if the server returns a
+ *     null cursor or fewer events than requested.
+ */
+export async function fetchEventsPaginated(
+  pageSize = 100,
+  maxPages = 5,
+  signal?: AbortSignal
+): Promise<EventResponse[]> {
+  const all: EventResponse[] = [];
+  let before: number | null = null;
+  for (let page = 0; page < maxPages; page++) {
+    const path: string =
+      `/emei/public/events?limit=${pageSize}` +
+      (before != null ? `&before=${before}` : "");
+    const resp = await fetchJSON<EventsResponse>(path, signal);
+    all.push(...resp.events);
+    if (resp.next_before == null || resp.events.length < pageSize) break;
+    before = resp.next_before;
+  }
+  return all;
+}
+
 export const fetchAgents = (signal?: AbortSignal) =>
   fetchJSON<AgentsResponse>("/emei/public/agents", signal);
 

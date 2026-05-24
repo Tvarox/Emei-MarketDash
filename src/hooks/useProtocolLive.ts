@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   fetchStats,
   fetchEvents,
+  fetchEventsPaginated,
   fetchAgents,
   fetchMandates,
   parseAmount,
@@ -66,6 +67,12 @@ export interface LiveExtras {
   latestReceiptRoot: string | null;
   latestReceiptAt: number | null;
   successRate: number;
+  // Aggregate invoice totals from /emei/public/stats. These are the true
+  // protocol-wide counts; the `invoices` array on ProtocolState is only the
+  // most-recent events and is capped at MAX_LEDGER.
+  invoicesIssued: number;
+  invoicesPresented: number;
+  invoicesPaid: number;
   activeMandates: number;
   mandates: MandateInfo[];
   loading: boolean;
@@ -75,26 +82,68 @@ export interface LiveExtras {
 
 const POLL_INTERVAL_MS = 5000;
 const FLOW_TOTAL_MS = 5800;
-const MAX_LEDGER = 50;
+const MAX_LEDGER = 250;
+// Events API caps each response at 100; we follow the cursor up to this many
+// pages on initial load so the ledger can reflect a meaningful slice of all
+// 191 paid invoices (≈3 events per invoice → 500 events → ~165 invoices).
+const MAX_INITIAL_EVENT_PAGES = 5;
 
 /**
  * Group raw events by invoice_id and derive a single Invoice with the highest
  * lifecycle state we've seen (Paid > Presented > Issued).
  *
  * Backend gotchas handled here:
- *   - InvoiceCreated rows currently land with invoice_id = null. We skip those
- *     for the ledger (the ones we care about always pair with a Presented or
- *     Paid event that has the real id).
- *   - Some Presented rows have null amount/category. Recover from the matching
- *     Created/Paid row when we can.
+ *   - `InvoiceCreated` rows currently land with `invoice_id = null`. We pair
+ *     each orphan with the *next* (older) invoice we see going backwards in
+ *     the stream that doesn't already have a `created` companion. This works
+ *     because the API returns events newest-first and Created → Presented →
+ *     Paid for a single invoice always appear in that adjacency.
+ *   - Some Presented rows have null amount/category. Recover from the
+ *     companion Created/Paid row when we can.
  */
 function deriveInvoicesFromEvents(events: EventResponse[]): Invoice[] {
   const byId = new Map<number, EventResponse[]>();
+
+  // Pass 1: bucket by invoice_id and remember orphan Created events in order.
+  const orphanCreated: EventResponse[] = [];
   for (const ev of events) {
+    if (ev.type === "InvoiceCreated" && ev.invoice_id == null) {
+      orphanCreated.push(ev);
+      continue;
+    }
     if (ev.invoice_id == null) continue;
     const list = byId.get(ev.invoice_id);
     if (list) list.push(ev);
     else byId.set(ev.invoice_id, [ev]);
+  }
+
+  // Pass 2: pair each orphan with the most-recent invoice id (in event order)
+  // that still has no Created companion. The API returns events newest-first
+  // and the stream looks like:
+  //     Paid #164, Presented #164, Created (null), Paid #163, Presented #163, Created (null), …
+  // so walking forward through `events` and matching the next id-bearing
+  // invoice without a Created event yields the right pairing.
+  const idsAwaitingCreated: number[] = [];
+  for (const ev of events) {
+    if (ev.type === "InvoiceCreated" && ev.invoice_id == null) {
+      const targetId = idsAwaitingCreated.shift();
+      if (targetId != null) {
+        const list = byId.get(targetId);
+        if (list && !list.some((e) => e.type === "InvoiceCreated")) {
+          list.push(ev);
+        }
+      }
+      continue;
+    }
+    if (ev.invoice_id == null) continue;
+    const list = byId.get(ev.invoice_id);
+    if (
+      list &&
+      !list.some((e) => e.type === "InvoiceCreated") &&
+      !idsAwaitingCreated.includes(ev.invoice_id)
+    ) {
+      idsAwaitingCreated.push(ev.invoice_id);
+    }
   }
 
   const invoices: Invoice[] = [];
@@ -124,7 +173,7 @@ function deriveInvoicesFromEvents(events: EventResponse[]): Invoice[] {
       amount,
       category,
       txHash,
-      issuedTick: created?.timestamp ?? latest.timestamp,
+      issuedTick: created?.timestamp ?? presented?.timestamp ?? latest.timestamp,
       presentedTick: presented?.timestamp,
       paidTick: paid?.timestamp,
     });
@@ -213,9 +262,17 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
 
     const poll = async () => {
       try {
-        const [statsResp, eventsResp, agentsResp, mandatesResp] = await Promise.all([
+        // First load fans out the events feed several pages deep so the ledger
+        // captures a meaningful slice of history (~165 invoices). Subsequent
+        // polls only fetch the most recent page and merge any updates with
+        // the deep history we already paginated; older invoices don't change.
+        const eventsPromise = initialLoadRef.current
+          ? fetchEventsPaginated(100, MAX_INITIAL_EVENT_PAGES, controller.signal)
+          : fetchEvents(100, controller.signal).then((r) => r.events);
+
+        const [statsResp, eventsList, agentsResp, mandatesResp] = await Promise.all([
           fetchStats(controller.signal),
-          fetchEvents(MAX_LEDGER, controller.signal),
+          eventsPromise,
           fetchAgents(controller.signal),
           fetchMandates(controller.signal).catch(() => ({ mandates: [] })),
         ]);
@@ -226,21 +283,36 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
         setAgents(agentsResp.agents);
         setMandates(mandatesResp.mandates ?? []);
 
-        const newInvoices = deriveInvoicesFromEvents(eventsResp.events);
-        setInvoices(newInvoices);
+        const incoming = deriveInvoicesFromEvents(eventsList);
+        setInvoices((prev) => {
+          if (initialLoadRef.current) return incoming;
+          // Merge: incoming has the freshest snapshot for any invoice it
+          // mentions; prev keeps the deep tail we paginated on first load.
+          const merged = new Map<number, Invoice>();
+          for (const inv of prev) merged.set(inv.id, inv);
+          for (const inv of incoming) merged.set(inv.id, inv);
+          return Array.from(merged.values())
+            .sort((a, b) => {
+              const aT = a.paidTick ?? a.presentedTick ?? a.issuedTick;
+              const bT = b.paidTick ?? b.presentedTick ?? b.issuedTick;
+              return bT - aT;
+            })
+            .slice(0, MAX_LEDGER);
+        });
 
         // Detect newly paid invoices to play the settlement animation.
+        // Compare against the paid set we've already observed (seenPaidIds).
         if (initialLoadRef.current) {
-          for (const inv of newInvoices) {
+          for (const inv of incoming) {
             if (inv.status === "Paid") seenPaidIds.current.add(inv.id);
           }
           initialLoadRef.current = false;
         } else if (flowPhaseRef.current === "idle") {
-          const newlyPaid = newInvoices.find(
+          const newlyPaid = incoming.find(
             (inv) => inv.status === "Paid" && !seenPaidIds.current.has(inv.id)
           );
           // Mark all currently-paid as seen so we only animate one transition.
-          for (const inv of newInvoices) {
+          for (const inv of incoming) {
             if (inv.status === "Paid") seenPaidIds.current.add(inv.id);
           }
           if (newlyPaid) {
@@ -326,6 +398,7 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
 
   const totals = stats?.totals;
   const issued = totals?.invoices_issued ?? 0;
+  const presented = totals?.invoices_presented ?? 0;
   const paid = totals?.invoices_paid ?? 0;
   const successRate = issued > 0 ? Math.round((paid / issued) * 100) : 0;
 
@@ -346,6 +419,9 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
     latestReceiptRoot: stats?.latest_receipt_root ?? null,
     latestReceiptAt: stats?.latest_receipt_at ?? null,
     successRate,
+    invoicesIssued: issued,
+    invoicesPresented: presented,
+    invoicesPaid: paid,
     activeMandates: stats?.active_mandates ?? 0,
     mandates,
     loading,

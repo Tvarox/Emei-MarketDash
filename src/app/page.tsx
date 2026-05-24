@@ -11,9 +11,9 @@ export type { InvoiceStatus, FlowPhase } from "@/hooks/useProtocolLive";
 export default function Home() {
   const sim = useProtocolLive();
 
-  const issued = sim.invoices.length;
-  const paid = sim.invoices.filter((i) => i.status === "Paid").length;
-  const presented = sim.invoices.filter((i) => i.status === "Presented").length;
+  const issued = sim.invoicesIssued;
+  const paid = sim.invoicesPaid;
+  const presented = sim.invoicesPresented;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -58,7 +58,14 @@ export default function Home() {
           onTrigger={sim.triggerNow}
         />
 
-        <SettlementLedger events={sim.invoices} />
+        <SettlementLedger
+          events={sim.invoices}
+          totals={{
+            issued: sim.invoicesIssued,
+            presented: sim.invoicesPresented,
+            paid: sim.invoicesPaid,
+          }}
+        />
 
         {/* Footer */}
         <footer className="pt-6 pb-2 flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-200/60 flex-wrap gap-2">

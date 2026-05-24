@@ -228,10 +228,10 @@ function SuccessRateCard({
           <div className="mt-2 flex items-center justify-between text-[10px] font-medium text-zinc-500">
             <span className="flex items-center gap-1">
               <span className="w-1 h-1 rounded-full bg-orange-500" />
-              {presented} pending
+              {Math.max(0, issued - paid)} outstanding
             </span>
             <span className="font-[family-name:var(--font-jetbrains)] tabular-nums">
-              {Math.max(0, issued - paid - presented)} issued
+              {issued} issued
             </span>
           </div>
         </div>
