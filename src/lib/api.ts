@@ -77,19 +77,31 @@ export interface EventsResponse {
 }
 
 export interface MandateInfo {
-  id: string;
+  // The "id" pair: live API returns `mandate_id`; some older shapes used `id`.
+  mandate_id?: number;
+  id?: string;
   owner_label?: string;
-  owner: string;
+  owner?: string;
+  payer?: string;
+  payer_label?: string;
   counterparties?: string[];
   counterparty_labels?: string[];
+  approved_counterparties?: string[];
+  approved_categories?: string[];
   categories?: string[];
   spend_cap_musd?: string;
   spent_musd?: string;
+  // Live API field names. Older `remaining_musd` kept for backward compat.
+  remaining_cap_musd?: string;
   remaining_musd?: string;
   utilization_pct?: number;
+  valid_from?: number;
+  valid_until?: number;
   expires_at?: number;
   created_at?: number;
   last_collect_at_sec_ago?: number | null;
+  /** "active" | "revoked" | etc. — present on the live API. */
+  status?: string;
   revoked?: boolean;
 }
 

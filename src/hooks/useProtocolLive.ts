@@ -73,8 +73,18 @@ export interface LiveExtras {
   invoicesIssued: number;
   invoicesPresented: number;
   invoicesPaid: number;
+  invoicesOverdue: number;
+  mandatesCreated: number;
+  mandatesRevoked: number;
+  settlements: number;
   activeMandates: number;
   mandates: MandateInfo[];
+  /** Chain context — surfaced for detail modals that show explorer links. */
+  chainId: number | null;
+  network: string | null;
+  latestBlock: number | null;
+  /** Per-agent receipt attribution lives on the raw agents response. */
+  agents: AgentResponse[];
   loading: boolean;
   online: boolean;
   lastUpdatedAt: number | null;
@@ -422,8 +432,16 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
     invoicesIssued: issued,
     invoicesPresented: presented,
     invoicesPaid: paid,
+    invoicesOverdue: totals?.invoices_overdue ?? 0,
+    mandatesCreated: totals?.mandates_created ?? 0,
+    mandatesRevoked: totals?.mandates_revoked ?? 0,
+    settlements: totals?.settlements ?? 0,
     activeMandates: stats?.active_mandates ?? 0,
     mandates,
+    chainId: stats?.chain_id ?? null,
+    network: stats?.network ?? null,
+    latestBlock: stats?.latest_block ?? null,
+    agents,
     loading,
     online,
     lastUpdatedAt,

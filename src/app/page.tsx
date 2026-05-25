@@ -46,6 +46,23 @@ export default function Home() {
           presented={presented}
           receiptsAnchored={sim.receiptsAnchored}
           latestReceiptRoot={sim.latestReceiptRoot}
+          latestReceiptAt={sim.latestReceiptAt}
+          network={sim.network}
+          chainId={sim.chainId}
+          invoices={sim.invoices}
+          agents={sim.agents}
+          mandates={sim.mandates}
+          activeMandates={sim.activeMandates}
+          statsTotals={{
+            invoices_issued: sim.invoicesIssued,
+            invoices_presented: sim.invoicesPresented,
+            invoices_paid: sim.invoicesPaid,
+            invoices_overdue: sim.invoicesOverdue,
+            mandates_created: sim.mandatesCreated,
+            mandates_revoked: sim.mandatesRevoked,
+            receipts_anchored: sim.receiptsAnchored,
+            settlements: sim.settlements,
+          }}
         />
 
         <AgentEconomy
