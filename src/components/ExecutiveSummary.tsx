@@ -19,7 +19,6 @@ export default function ExecutiveSummary({
   volumeSettled,
   paid,
   issued,
-  presented,
   receiptsAnchored = 0,
   latestReceiptRoot = null,
 }: ExecutiveSummaryProps) {
@@ -51,7 +50,6 @@ export default function ExecutiveSummary({
       <SuccessRateCard
         paid={paid}
         issued={issued}
-        presented={presented}
         successRate={successRate}
         delay={0.18}
       />
@@ -174,13 +172,11 @@ function ReceiptsCard({
 function SuccessRateCard({
   paid,
   issued,
-  presented,
   successRate,
   delay,
 }: {
   paid: number;
   issued: number;
-  presented: number;
   successRate: number;
   delay: number;
 }) {

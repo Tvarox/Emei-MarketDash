@@ -432,7 +432,7 @@ function LedgerRow({
       </td>
       <td className="px-6 py-3.5">
         <span className="font-[family-name:var(--font-jetbrains)] text-[13px] font-semibold text-zinc-900">
-          #{event.id}
+          {event.id < 0 ? "#pending" : `#${event.id}`}
         </span>
       </td>
       <td className="px-6 py-3.5">

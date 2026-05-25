@@ -104,26 +104,29 @@ const MAX_INITIAL_EVENT_PAGES = 5;
 function deriveInvoicesFromEvents(events: EventResponse[]): Invoice[] {
   const byId = new Map<number, EventResponse[]>();
 
-  // Pass 1: bucket by invoice_id and remember orphan Created events in order.
-  const orphanCreated: EventResponse[] = [];
+  // Pass 1: bucket id-bearing events by invoice_id. Orphan Created events
+  // (the API emits Created with `invoice_id: null`) are not bucketed here;
+  // they're paired in pass 2 if possible, or surfaced separately as "pending
+  // Issued" rows below.
   for (const ev of events) {
-    if (ev.type === "InvoiceCreated" && ev.invoice_id == null) {
-      orphanCreated.push(ev);
-      continue;
-    }
     if (ev.invoice_id == null) continue;
     const list = byId.get(ev.invoice_id);
     if (list) list.push(ev);
     else byId.set(ev.invoice_id, [ev]);
   }
 
-  // Pass 2: pair each orphan with the most-recent invoice id (in event order)
-  // that still has no Created companion. The API returns events newest-first
-  // and the stream looks like:
+  // Pass 2: pair each orphan Created with the most-recent invoice id (in event
+  // order) that still has no Created companion. The API returns events
+  // newest-first and the stream looks like:
   //     Paid #164, Presented #164, Created (null), Paid #163, Presented #163, Created (null), …
   // so walking forward through `events` and matching the next id-bearing
   // invoice without a Created event yields the right pairing.
   const idsAwaitingCreated: number[] = [];
+  // Track which orphan Createds got paired; anything left over is rendered
+  // as a "pending Issued" row so users can still click through to the
+  // explorer for invoices that haven't been Presented yet.
+  const pairedOrphans = new Set<EventResponse>();
+
   for (const ev of events) {
     if (ev.type === "InvoiceCreated" && ev.invoice_id == null) {
       const targetId = idsAwaitingCreated.shift();
@@ -131,6 +134,7 @@ function deriveInvoicesFromEvents(events: EventResponse[]): Invoice[] {
         const list = byId.get(targetId);
         if (list && !list.some((e) => e.type === "InvoiceCreated")) {
           list.push(ev);
+          pairedOrphans.add(ev);
         }
       }
       continue;
@@ -152,6 +156,12 @@ function deriveInvoicesFromEvents(events: EventResponse[]): Invoice[] {
     const presented = evs.find((e) => e.type === "InvoicePresented");
     const paid = evs.find((e) => e.type === "InvoicePaid");
 
+    // Skip buckets with only auxiliary lifecycle events (e.g. InvoiceOverdue,
+    // InvoiceRejected) and none of the three states we render. These can show
+    // up when the matching Created/Presented/Paid rows have already paged out.
+    const latest = paid ?? presented ?? created;
+    if (!latest) continue;
+
     let status: InvoiceStatus = "Issued";
     if (paid) status = "Paid";
     else if (presented) status = "Presented";
@@ -163,20 +173,38 @@ function deriveInvoicesFromEvents(events: EventResponse[]): Invoice[] {
     const category =
       created?.category ?? paid?.category ?? presented?.category ?? "data-signal";
 
-    // Use the most recent state-transition tx for the explorer link.
-    const latest = paid ?? presented ?? created!;
-    const txHash = latest.tx_hash;
-
     invoices.push({
       id,
       status,
       amount,
       category,
-      txHash,
+      txHash: latest.tx_hash,
       issuedTick: created?.timestamp ?? presented?.timestamp ?? latest.timestamp,
       presentedTick: presented?.timestamp,
       paidTick: paid?.timestamp,
     });
+  }
+
+  // Render unpaired orphan Createds as pending Issued rows. The chain hasn't
+  // assigned an invoice_id yet, so we synthesize one from the negative block
+  // number (negative => stable, unique, sortable, and trivially detectable in
+  // the UI as "pending"). The Created event's tx_hash is real on-chain, so
+  // the explorer link works.
+  for (const ev of events) {
+    if (
+      ev.type === "InvoiceCreated" &&
+      ev.invoice_id == null &&
+      !pairedOrphans.has(ev)
+    ) {
+      invoices.push({
+        id: -ev.block,
+        status: "Issued",
+        amount: parseAmount(ev.amount_musd, 1.0),
+        category: ev.category ?? "data-signal",
+        txHash: ev.tx_hash,
+        issuedTick: ev.timestamp,
+      });
+    }
   }
 
   // Most recent activity first.
@@ -288,8 +316,22 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
           if (initialLoadRef.current) return incoming;
           // Merge: incoming has the freshest snapshot for any invoice it
           // mentions; prev keeps the deep tail we paginated on first load.
+          // Drop "pending" rows (negative synthetic ids) from prev — they
+          // exist only to surface freshly-Created invoices in the current
+          // poll. On the next poll they either:
+          //   (a) get a real id via orphan-pairing → already present in
+          //       `incoming` under a positive id, or
+          //   (b) reappear as a fresh pending row in `incoming` because the
+          //       Created event is still in the window without a Presented
+          //       companion yet.
+          // Either way we want to start from a clean slate so we don't end
+          // up with duplicate rows for the same invoice (one #pending, one
+          // #real-id).
           const merged = new Map<number, Invoice>();
-          for (const inv of prev) merged.set(inv.id, inv);
+          for (const inv of prev) {
+            if (inv.id < 0) continue;
+            merged.set(inv.id, inv);
+          }
           for (const inv of incoming) merged.set(inv.id, inv);
           return Array.from(merged.values())
             .sort((a, b) => {
