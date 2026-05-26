@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "EMEI Protocol Monitor",
   description:
     "Live protocol dashboard for EMEI — an open invoicing protocol for machine-to-machine transactions within agentic AI workflows.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({

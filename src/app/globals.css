@@ -25,3 +25,10 @@ body {
     background-color: rgba(249, 115, 22, 0);
   }
 }
+
+@media (max-width: 1020px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+

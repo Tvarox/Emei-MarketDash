@@ -48,15 +48,17 @@ export default function Home() {
           latestReceiptRoot={sim.latestReceiptRoot}
         />
 
-        <AgentEconomy
-          agentA={sim.agentA}
-          agentB={sim.agentB}
-          flowPhase={sim.flowPhase}
-          pendingFlowAmount={sim.pendingFlowAmount}
-          pendingInvoiceId={sim.pendingInvoiceId}
-          presented={presented}
-          onTrigger={sim.triggerNow}
-        />
+        <div className="desktop-only">
+          <AgentEconomy
+            agentA={sim.agentA}
+            agentB={sim.agentB}
+            flowPhase={sim.flowPhase}
+            pendingFlowAmount={sim.pendingFlowAmount}
+            pendingInvoiceId={sim.pendingInvoiceId}
+            presented={presented}
+            onTrigger={sim.triggerNow}
+          />
+        </div>
 
         <SettlementLedger
           events={sim.invoices}

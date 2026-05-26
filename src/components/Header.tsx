@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 interface HeaderProps {
   block: number;
@@ -13,20 +14,14 @@ export default function Header({ block, blockProgress }: HeaderProps) {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg shadow-orange-500/25 flex items-center justify-center">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="white"
-              strokeWidth="2.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-          </div>
+          <Image
+            src="/Logo.svg"
+            alt=""
+            width={22}
+            height={22}
+            className="w-[22px] h-[22px]"
+            priority
+          />
           <span className="text-xl font-bold tracking-tight text-zinc-900">
             EMEI
           </span>
