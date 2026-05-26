@@ -48,6 +48,7 @@ export default function Home() {
               paid={paid}
               issued={issued}
               presented={presented}
+              overdue={sim.invoicesOverdue}
               receiptsAnchored={sim.receiptsAnchored}
               latestReceiptRoot={sim.latestReceiptRoot}
             />
@@ -61,6 +62,7 @@ export default function Home() {
                 issued: sim.invoicesIssued,
                 presented: sim.invoicesPresented,
                 paid: sim.invoicesPaid,
+                overdue: sim.invoicesOverdue,
               }}
             />
 

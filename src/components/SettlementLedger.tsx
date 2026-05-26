@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Invoice, InvoiceStatus } from "@/hooks/useProtocolSimulation";
+import type { Invoice, InvoiceStatus } from "@/hooks/useProtocolLive";
 
 interface SettlementLedgerProps {
   events: Invoice[];
@@ -15,10 +15,11 @@ interface SettlementLedgerProps {
     issued: number;
     presented: number;
     paid: number;
+    overdue: number;
   };
 }
 
-type FilterMode = "all" | "Issued" | "Presented" | "Paid";
+type FilterMode = "all" | "Overdue" | "Presented" | "Paid";
 type CategoryFilter = "all" | "compute" | "analytics" | "data-signal";
 
 const CATEGORY_OPTIONS: { value: CategoryFilter; label: string }[] = [
@@ -38,10 +39,11 @@ const CATEGORY_OPTIONS: { value: CategoryFilter; label: string }[] = [
  *   - phase = Issued    → every invoice qualifies
  *   - phase = Presented → has presentedTick OR has paidTick (Paid implies Presented)
  *   - phase = Paid      → has paidTick
+ *   - phase = Overdue   → status is Overdue
  */
 function hasReachedPhase(event: Invoice, phase: FilterMode): boolean {
   if (phase === "all") return true;
-  if (phase === "Issued") return true;
+  if (phase === "Overdue") return event.status === "Overdue";
   if (phase === "Presented")
     return event.presentedTick != null || event.paidTick != null;
   if (phase === "Paid") return event.paidTick != null;
@@ -56,12 +58,13 @@ function timestampForPhase(
   event: Invoice,
   phase: FilterMode
 ): { ts: number | undefined; label: string } {
-  if (phase === "Issued") return { ts: event.issuedTick, label: "issued" };
+  if (phase === "Overdue") return { ts: event.issuedTick, label: "issued" };
   if (phase === "Presented")
     return { ts: event.presentedTick, label: "presented" };
   if (phase === "Paid") return { ts: event.paidTick, label: "paid" };
   // "all" → row's current status
   if (event.status === "Paid") return { ts: event.paidTick, label: "paid" };
+  if (event.status === "Overdue") return { ts: event.issuedTick, label: "overdue" };
   if (event.status === "Presented")
     return { ts: event.presentedTick, label: "presented" };
   return { ts: event.issuedTick, label: "issued" };
@@ -154,7 +157,7 @@ export default function SettlementLedger({
     }
     if (totals) {
       if (mode === "all") return totals.issued;
-      if (mode === "Issued") return totals.issued;
+      if (mode === "Overdue") return totals.overdue;
       if (mode === "Presented") return totals.presented;
       if (mode === "Paid") return totals.paid;
     }
@@ -247,7 +250,7 @@ export default function SettlementLedger({
                   </p>
                   <div className="grid grid-cols-2 gap-1">
                     {(
-                      ["all", "Issued", "Presented", "Paid"] as FilterMode[]
+                      ["all", "Overdue", "Presented", "Paid"] as FilterMode[]
                     ).map((mode) => (
                       <button
                         key={mode}
@@ -497,8 +500,12 @@ function StatusPill({ status }: { status: InvoiceStatus }) {
       text: "text-orange-700",
       dot: "bg-orange-500",
       border: "border-orange-200",
-    },
-    Paid: {
+    },    Overdue: {
+      bg: "bg-red-50",
+      text: "text-red-700",
+      dot: "bg-red-500",
+      border: "border-red-200/80",
+    },    Paid: {
       bg: "bg-emerald-50",
       text: "text-emerald-700",
       dot: "bg-emerald-500",
@@ -515,7 +522,7 @@ function StatusPill({ status }: { status: InvoiceStatus }) {
           status === "Presented" ? "animate-pulse" : ""
         }`}
       />
-      {status}
+      {status === "Issued" ? "Created" : status}
     </span>
   );
 }

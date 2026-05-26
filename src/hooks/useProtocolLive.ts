@@ -18,7 +18,7 @@ import {
 
 // These types intentionally mirror useProtocolSimulation so existing components
 // (AgentEconomy, SettlementLedger, etc.) consume this hook without modification.
-export type InvoiceStatus = "Issued" | "Presented" | "Paid";
+export type InvoiceStatus = "Issued" | "Presented" | "Paid" | "Overdue";
 export type FlowPhase =
   | "idle"
   | "invoice-issuing"
@@ -73,6 +73,7 @@ export interface LiveExtras {
   invoicesIssued: number;
   invoicesPresented: number;
   invoicesPaid: number;
+  invoicesOverdue: number;
   activeMandates: number;
   mandates: MandateInfo[];
   loading: boolean;
@@ -155,19 +156,21 @@ function deriveInvoicesFromEvents(events: EventResponse[]): Invoice[] {
     const created = evs.find((e) => e.type === "InvoiceCreated");
     const presented = evs.find((e) => e.type === "InvoicePresented");
     const paid = evs.find((e) => e.type === "InvoicePaid");
+    const overdue = evs.find((e) => e.type === "InvoiceOverdue");
 
-    // Skip buckets with only auxiliary lifecycle events (e.g. InvoiceOverdue,
-    // InvoiceRejected) and none of the three states we render. These can show
-    // up when the matching Created/Presented/Paid rows have already paged out.
-    const latest = paid ?? presented ?? created;
+    // Skip buckets with only auxiliary lifecycle events (e.g. InvoiceRejected)
+    // and none of the three states we render. These can show up when the
+    // matching Created/Presented/Paid rows have already paged out.
+    const latest = paid ?? overdue ?? presented ?? created;
     if (!latest) continue;
 
     let status: InvoiceStatus = "Issued";
     if (paid) status = "Paid";
+    else if (overdue) status = "Overdue";
     else if (presented) status = "Presented";
 
     const amount = parseAmount(
-      paid?.amount_musd ?? created?.amount_musd ?? presented?.amount_musd,
+      paid?.amount_musd ?? created?.amount_musd ?? presented?.amount_musd ?? overdue?.amount_musd,
       1.0
     );
     const category =
@@ -231,6 +234,7 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
   const [pendingFlowAmount, setPendingFlowAmount] = useState(0);
   const [pendingInvoiceId, setPendingInvoiceId] = useState<number | null>(null);
   const [blockProgress, setBlockProgress] = useState(0);
+  const [invoicesOverdue, setInvoicesOverdue] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [online, setOnline] = useState(true);
@@ -310,6 +314,8 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
         setStats(statsResp);
         setAgents(agentsResp.agents);
         setMandates(mandatesResp.mandates ?? []);
+
+        setInvoicesOverdue(statsResp.totals.invoices_overdue);
 
         const incoming = deriveInvoicesFromEvents(eventsList);
         setInvoices((prev) => {
@@ -464,6 +470,7 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
     invoicesIssued: issued,
     invoicesPresented: presented,
     invoicesPaid: paid,
+    invoicesOverdue: invoicesOverdue,
     activeMandates: stats?.active_mandates ?? 0,
     mandates,
     loading,

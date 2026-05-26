@@ -10,6 +10,7 @@ interface ExecutiveSummaryProps {
   paid: number;
   issued: number;
   presented: number;
+  overdue: number;
   receiptsAnchored?: number;
   latestReceiptRoot?: string | null;
 }
@@ -19,6 +20,7 @@ export default function ExecutiveSummary({
   // volumeSettled,
   paid,
   issued,
+  overdue,
   receiptsAnchored = 0,
   latestReceiptRoot = null,
 }: ExecutiveSummaryProps) {
@@ -52,6 +54,7 @@ export default function ExecutiveSummary({
       <SuccessRateCard
         paid={paid}
         issued={issued}
+        overdue={overdue}
         successRate={successRate}
         delay={0.18}
       />
@@ -178,11 +181,13 @@ function ReceiptsCard({
 function SuccessRateCard({
   paid,
   issued,
+  overdue,
   successRate,
   delay,
 }: {
   paid: number;
   issued: number;
+  overdue: number;
   successRate: number;
   delay: number;
 }) {
@@ -231,11 +236,13 @@ function SuccessRateCard({
           </div>
           <div className="mt-2.5 flex items-center justify-between text-[10px] font-medium text-zinc-500">
             <span className="flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-orange-500" />
-              {Math.max(0, issued - paid)} outstanding
+              <span className={`w-1 h-1 rounded-full ${overdue > 0 ? "bg-red-500" : "bg-orange-500"}`} />
+              <span className={overdue > 0 ? "text-red-500 font-bold" : ""}>
+                {overdue} overdue
+              </span>
             </span>
             <span className="font-[family-name:var(--font-jetbrains)] tabular-nums">
-              {issued} issued
+              {issued} total
             </span>
           </div>
         </div>
