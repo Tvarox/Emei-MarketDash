@@ -11,7 +11,7 @@ interface HeaderProps {
 export default function Header({ block, blockProgress }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-zinc-200/60">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           <Image

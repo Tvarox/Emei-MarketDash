@@ -25,7 +25,7 @@ export default function ExecutiveSummary({
   const successRate = issued > 0 ? Math.round((paid / issued) * 100) : 0;
 
   return (
-    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <section className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:flex lg:flex-col lg:h-full">
       <MetricCard
         label="Protocol TVL"
         value={tvl}
@@ -77,7 +77,7 @@ function MetricCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="group relative overflow-hidden bg-white rounded-2xl border border-zinc-200/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] transition-shadow"
+      className="group relative overflow-hidden bg-white rounded-2xl border border-zinc-200/70 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] transition-shadow flex-1 min-h-0"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-zinc-50/50 pointer-events-none" />
 
@@ -96,7 +96,7 @@ function MetricCard({
             value={value}
             decimals={2}
             duration={800}
-            className="text-3xl font-bold tracking-tight text-zinc-900 font-[family-name:var(--font-jetbrains)] tabular-nums"
+            className="text-2xl font-bold tracking-tight text-zinc-900 font-[family-name:var(--font-jetbrains)] tabular-nums"
           />
           <span className="text-sm font-semibold text-zinc-400">{unit}</span>
         </div>
@@ -128,7 +128,7 @@ function ReceiptsCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden bg-white rounded-2xl border border-zinc-200/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] transition-shadow"
+      className="relative overflow-hidden bg-white rounded-2xl border border-zinc-200/70 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] transition-shadow flex-1 min-h-0"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-emerald-50/40 pointer-events-none" />
 
@@ -149,7 +149,7 @@ function ReceiptsCard({
             value={receipts}
             decimals={0}
             duration={800}
-            className="text-3xl font-bold tracking-tight text-zinc-900 font-[family-name:var(--font-jetbrains)] tabular-nums"
+            className="text-2xl font-bold tracking-tight text-zinc-900 font-[family-name:var(--font-jetbrains)] tabular-nums"
           />
           <span className="text-sm font-semibold text-zinc-400">on-chain</span>
         </div>
@@ -185,7 +185,7 @@ function SuccessRateCard({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden bg-white rounded-2xl border border-zinc-200/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] transition-shadow"
+      className="relative overflow-hidden bg-white rounded-2xl border border-zinc-200/70 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.06)] hover:shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-8px_rgba(0,0,0,0.10)] transition-shadow flex-1 min-h-0"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-orange-50/30 pointer-events-none" />
 
@@ -204,10 +204,10 @@ function SuccessRateCard({
           </motion.span>
         </div>
         <div className="mt-3 flex items-baseline gap-1.5">
-          <span className="text-3xl font-bold tracking-tight text-zinc-900 font-[family-name:var(--font-jetbrains)] tabular-nums">
+          <span className="text-2xl font-bold tracking-tight text-zinc-900 font-[family-name:var(--font-jetbrains)] tabular-nums">
             {paid}
           </span>
-          <span className="text-lg font-semibold text-zinc-400 font-[family-name:var(--font-jetbrains)] tabular-nums">
+          <span className="text-base font-semibold text-zinc-400 font-[family-name:var(--font-jetbrains)] tabular-nums">
             / {issued}
           </span>
           <span className="text-sm font-semibold text-zinc-400">Paid</span>
