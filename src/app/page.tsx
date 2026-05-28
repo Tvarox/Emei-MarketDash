@@ -31,7 +31,7 @@ export default function Home() {
             EMEI Protocol · Live Monitor
           </p>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white shrink-0 whitespace-nowrap">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white sm:shrink-0 sm:whitespace-nowrap">
               The Financial OS for AI Agents
             </h1>
             <div className="hidden sm:block w-px self-stretch bg-zinc-600" />
