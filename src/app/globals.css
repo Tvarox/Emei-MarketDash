@@ -32,3 +32,30 @@ body {
   }
 }
 
+/* ── Recharts × Tailwind v4 fix ──
+   Tailwind v4 preflight sets `display: block` on all <svg> elements,
+   which breaks Recharts' internal inline SVGs and area fills. */
+
+/* Restore inline SVG for all Recharts internal elements */
+.recharts-wrapper svg,
+.recharts-wrapper svg * {
+  display: initial;
+}
+
+.recharts-surface {
+  overflow: visible !important;
+}
+
+/* Area fill path: show the colored fill, hide any stroke */
+.recharts-area-area {
+  opacity: 1 !important;
+  stroke: none !important;
+}
+
+/* Curve stroke path: show the line, hide any fill */
+.recharts-area-curve {
+  opacity: 1 !important;
+  fill: none !important;
+}
+
+

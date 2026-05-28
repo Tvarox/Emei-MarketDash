@@ -1,16 +1,11 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
 
-interface HeaderProps {
-  block: number;
-  blockProgress: number;
-}
-
-export default function Header({ block, blockProgress }: HeaderProps) {
+export default function Header() {
   return (
-    <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-zinc-200/60">
+    <header className="sticky top-0 z-50 bg-zinc-950 backdrop-blur-xl border-b border-zinc-950">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
@@ -19,10 +14,10 @@ export default function Header({ block, blockProgress }: HeaderProps) {
             alt=""
             width={22}
             height={22}
-            className="w-[22px] h-[22px]"
+            className="w-[22px] h-[22px] invert"
             priority
           />
-          <span className="text-xl font-bold tracking-tight text-zinc-900">
+          <span className="text-xl font-bold tracking-tight text-white">
             EMEI
           </span>
         </div>
@@ -32,16 +27,8 @@ export default function Header({ block, blockProgress }: HeaderProps) {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="relative flex items-center gap-2.5 bg-white border border-zinc-200/80 rounded-full pl-3 pr-4 py-1.5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_-2px_rgba(0,0,0,0.06)] overflow-hidden"
+          className="relative flex items-center gap-2.5 bg-zinc-900 border border-zinc-700/80 rounded-full pl-3 pr-4 py-1.5 shadow-[0_1px_3px_rgba(0,0,0,0.2),0_4px_16px_-2px_rgba(0,0,0,0.3)] overflow-hidden"
         >
-          {/* Block progress bar at the bottom of the pill */}
-          <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-100">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-[width] duration-100 ease-linear"
-              style={{ width: `${blockProgress * 100}%` }}
-            />
-          </div>
-
           <div className="relative flex items-center justify-center">
             <motion.span
               className="absolute w-2.5 h-2.5 rounded-full bg-emerald-500"
@@ -50,25 +37,9 @@ export default function Header({ block, blockProgress }: HeaderProps) {
             />
             <span className="relative w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
           </div>
-          <span className="text-xs font-semibold text-zinc-700">
+          <span className="text-xs font-semibold text-zinc-300">
             Mantle Sepolia
           </span>
-          <span className="w-px h-3 bg-zinc-200" />
-          <div className="text-xs font-medium text-zinc-500 font-[family-name:var(--font-jetbrains)] flex items-center gap-1">
-            <span>Block</span>
-            <AnimatePresence mode="popLayout">
-              <motion.span
-                key={block}
-                initial={{ y: -8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 8, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="text-zinc-900 font-semibold inline-block min-w-[20px] text-left"
-              >
-                {block}
-              </motion.span>
-            </AnimatePresence>
-          </div>
         </motion.div>
       </div>
     </header>

@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import ExecutiveSummary from "@/components/ExecutiveSummary";
 import AgentEconomy from "@/components/AgentEconomy";
 import SettlementLedger from "@/components/SettlementLedger";
+import VaultVolumeChart from "@/components/VaultVolumeChart";
 import { useProtocolLive } from "@/hooks/useProtocolLive";
 
 export type { InvoiceStatus, FlowPhase } from "@/hooks/useProtocolLive";
@@ -17,25 +18,28 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Background gradient ambience */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-white via-zinc-50 to-zinc-100/60" />
-      <div className="fixed inset-0 -z-10 opacity-[0.015] bg-[radial-gradient(circle_at_50%_-20%,rgba(249,115,22,0.4),transparent_50%)]" />
+      {/* Background: black top 35%, white rest */}
+      <div className="fixed inset-0 -z-10 bg-white" />
+      <div className="fixed inset-x-0 top-0 -z-10 h-[40vh] bg-zinc-950" />
 
-      <Header block={sim.block} blockProgress={sim.blockProgress} />
+      <Header />
 
       <main className="flex-1 max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-8">
         {/* Hero Headline — always full-width on top */}
-        <section className="space-y-2">
-          <p className="text-xs font-semibold text-orange-600 uppercase tracking-[0.18em]">
+        <section className="space-y-3">
+          <p className="text-xs font-semibold text-orange-500 uppercase tracking-[0.18em]">
             EMEI Protocol · Live Monitor
           </p>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-zinc-900">
-            The Financial OS for AI Agents
-          </h1>
-          <p className="text-sm sm:text-base text-zinc-500 max-w-2xl">
-            Autonomous invoicing, reputation-gated underwriting, and instant
-            settlement between machine-to-machine agents.
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white shrink-0 whitespace-nowrap">
+              The Financial OS for AI Agents
+            </h1>
+            <div className="hidden sm:block w-px self-stretch bg-zinc-600" />
+            <p className="text-sm sm:text-base text-zinc-400 max-w-md">
+              Autonomous invoicing, reputation-gated underwriting, and instant
+              settlement between machine-to-machine agents.
+            </p>
+          </div>
         </section>
 
         {/* Two-column layout: left scrolls, right sticky */}
@@ -56,6 +60,8 @@ export default function Home() {
 
           {/* ── LEFT COLUMN (scrollable) ── */}
           <div className="flex-1 min-w-0 space-y-8">
+            <VaultVolumeChart agents={sim.agents} />
+
             <SettlementLedger
               events={sim.invoices}
               totals={{
@@ -67,24 +73,15 @@ export default function Home() {
             />
 
             <div className="desktop-only">
-              <AgentEconomy
-                agentA={sim.agentA}
-                agentB={sim.agentB}
-                flowPhase={sim.flowPhase}
-                pendingFlowAmount={sim.pendingFlowAmount}
-                pendingInvoiceId={sim.pendingInvoiceId}
-                presented={presented}
-                onTrigger={sim.triggerNow}
-              />
+              <AgentEconomy />
             </div>
 
             {/* Footer */}
             <footer className="pt-6 pb-2 flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-200/60 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    sim.online ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full ${sim.online ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                    }`}
                 />
                 <span>
                   {sim.online ? "All systems operational" : "Reconnecting…"} ·{" "}

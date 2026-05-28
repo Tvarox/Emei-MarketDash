@@ -172,29 +172,17 @@ export default function SettlementLedger({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="bg-white rounded-2xl border border-zinc-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.08)] overflow-hidden"
+      className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/40 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.08)] overflow-hidden"
     >
       {/* Header */}
-      <div className="px-6 py-5 border-b border-zinc-100">
-        <h2 className="text-base font-bold text-zinc-900 tracking-tight">
-          Live Settlement Ledger
-        </h2>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Recent invoice events across the EMEI network
-        </p>
-      </div>
-
-      {/* Filter Toolbar — single hamburger that opens a popover with both
-          status and category filters. Sits above the table so it lives close
-          to what it controls. */}
-      <div className="px-6 py-3 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/30">
-        <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
-          {filter === "all" ? "All invoices" : `${filter} invoices`}
-          {category !== "all" && (
-            <span className="ml-1.5 text-zinc-400 font-normal normal-case tracking-normal">
-              · {category}
-            </span>
-          )}
+      <div className="px-6 py-3 border-b border-zinc-100 flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-base font-bold text-zinc-900 tracking-tight">
+            Live Settlement Ledger
+          </h2>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Recent invoice events across the EMEI network
+          </p>
         </div>
 
         <div className="relative" ref={filtersWrapRef}>
@@ -355,7 +343,7 @@ export default function SettlementLedger({
               <th className="px-6 py-3 text-right w-[160px]">Proof</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100">
+          <tbody>
             {filtered.map((event) => (
               <LedgerRow
                 key={event.id}

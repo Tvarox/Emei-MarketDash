@@ -1,37 +1,132 @@
 "use client";
 
+import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { FlowPhase } from "@/hooks/useProtocolSimulation";
 import AnimatedNumber from "./AnimatedNumber";
 
-interface Agent {
+/* ── Static Agent Profiles ── */
+interface AgentProfile {
   name: string;
   role: string;
   address: string;
   balance: number;
   reputation: number;
+  reputationLabel: string;
 }
 
-interface AgentEconomyProps {
-  agentA: Agent; // Earner
-  agentB: Agent; // Payer
-  flowPhase: FlowPhase;
-  pendingFlowAmount: number;
-  pendingInvoiceId: number | null;
-  presented: number;
-  onTrigger: () => void;
+const EARNERS: Record<string, AgentProfile> = {
+  "compute-bot": {
+    name: "compute-bot",
+    role: "Earner (GPU Compute Provider)",
+    address: "0x34fd...f561",
+    balance: 30.00,
+    reputation: 98,
+    reputationLabel: "Excellent",
+  },
+  "analytics-bot": {
+    name: "analytics-bot",
+    role: "Earner (Data Analytics Service)",
+    address: "0x19ba...c34b",
+    balance: 430.00,
+    reputation: 100,
+    reputationLabel: "Flawless",
+  },
+  "signal-bot": {
+    name: "signal-bot",
+    role: "Earner (Trading Signals Agent)",
+    address: "0x277d...d735",
+    balance: 585.00,
+    reputation: 100,
+    reputationLabel: "Flawless",
+  },
+};
+
+interface PayerProfile extends AgentProfile {
+  mandate: {
+    spend_cap_musd: string;
+    spent_musd: string;
+    remaining_cap_musd: string;
+  };
 }
 
-export default function AgentEconomy({
-  agentA,
-  agentB,
-  flowPhase,
-  pendingFlowAmount,
-  pendingInvoiceId,
-  presented,
-  onTrigger,
-}: AgentEconomyProps) {
-  const isFlowing = flowPhase !== "idle";
+const PAYERS: Record<string, PayerProfile> = {
+  "trader-bot": {
+    name: "trader-bot",
+    role: "Payer (Arbitrage Trader)",
+    address: "0xf980...591b",
+    balance: 745.00,
+    reputation: 100,
+    reputationLabel: "Flawless",
+    mandate: {
+      spend_cap_musd: "1000.00",
+      spent_musd: "585.00",
+      remaining_cap_musd: "415.00",
+    },
+  },
+  "research-bot": {
+    name: "research-bot",
+    role: "Payer (LLM Researcher Agent)",
+    address: "0x7a8c...82ea",
+    balance: 612.00,
+    reputation: 100,
+    reputationLabel: "Flawless",
+    mandate: {
+      spend_cap_musd: "500.00",
+      spent_musd: "120.00",
+      remaining_cap_musd: "380.00",
+    },
+  },
+};
+
+type FlowPhase =
+  | "idle"
+  | "invoice-issuing"
+  | "payer-authorizing"
+  | "engine-processing"
+  | "earner-receiving";
+
+export default function AgentEconomy() {
+  const [selectedEarner, setSelectedEarner] = useState<"compute-bot" | "analytics-bot" | "signal-bot">("signal-bot");
+  const [activePayerKey, setActivePayerKey] = useState<"trader-bot" | "research-bot">("trader-bot");
+  
+  const [step, setStep] = useState(0);
+  const [pendingFlowAmount, setPendingFlowAmount] = useState(0);
+  const [pendingInvoiceId, setPendingInvoiceId] = useState<number | null>(null);
+
+  const flowPhase = useMemo<FlowPhase>(() => {
+    return (["idle", "invoice-issuing", "payer-authorizing", "engine-processing", "earner-receiving"] as const)[step];
+  }, [step]);
+
+  // Active earner/payer objects from state selection
+  const earner = useMemo(() => EARNERS[selectedEarner], [selectedEarner]);
+  const payer = useMemo(() => PAYERS[activePayerKey], [activePayerKey]);
+
+  // StrictMode-compliant Sequential Phase Loop
+  useEffect(() => {
+    let delay = 4000; // duration for each phase
+    if (flowPhase === "idle") {
+      delay = 5000; // longer pause when idle
+    }
+
+    const timer = setTimeout(() => {
+      setStep((prev) => {
+        const next = (prev + 1) % 5;
+        // On starting a new cycle: randomize next Payer & transaction details
+        if (next === 1) {
+          const nextPayer = Math.random() > 0.5 ? "trader-bot" : "research-bot";
+          setActivePayerKey(nextPayer);
+          
+          const maxAmt = nextPayer === "trader-bot" ? 45 : 20;
+          const amt = Math.round((5 + Math.random() * maxAmt) * 100) / 100;
+          setPendingFlowAmount(amt);
+          setPendingInvoiceId(Math.floor(1200 + Math.random() * 800));
+        }
+        return next;
+      });
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [step, flowPhase]);
 
   return (
     <motion.section
@@ -44,39 +139,30 @@ export default function AgentEconomy({
       <div className="px-6 sm:px-8 py-5 border-b border-zinc-100 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-base font-bold text-zinc-900 tracking-tight">
-            Agent Economy
+            Agent Economy Flow
           </h2>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Real-time machine-to-machine settlement flow
+            Auto-executing machine-to-machine settlement simulation
           </p>
         </div>
 
+        {/* Dynamic Bot Selectors */}
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-3 text-[11px] text-zinc-500">
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-              <span>Payer authorization</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>Earner credit</span>
-            </div>
+          <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-0.5 border border-zinc-200/40">
+            {(["compute-bot", "analytics-bot", "signal-bot"] as const).map((botName) => (
+              <button
+                key={botName}
+                onClick={() => setSelectedEarner(botName)}
+                className={`text-[10px] font-bold px-2.5 py-1 rounded-md transition-all duration-200 ${
+                  selectedEarner === botName
+                    ? "bg-white text-zinc-900 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-700"
+                }`}
+              >
+                {botName === "compute-bot" ? "compute-bot" : botName === "analytics-bot" ? "analytics-bot" : "signal-bot"}
+              </button>
+            ))}
           </div>
-
-          <button
-            onClick={onTrigger}
-            disabled={isFlowing}
-            className={`flex items-center gap-1.5 text-xs font-semibold rounded-lg px-3 py-1.5 transition-all ${
-              isFlowing
-                ? "bg-zinc-100 text-zinc-400 cursor-not-allowed"
-                : "bg-zinc-900 hover:bg-zinc-800 text-white shadow-sm hover:shadow-md"
-            }`}
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-            {isFlowing ? "Settling…" : "Trigger Settlement"}
-          </button>
         </div>
       </div>
 
@@ -99,9 +185,9 @@ export default function AgentEconomy({
         {/* Earner - Left (issues invoice + receives funds) */}
         <div className="relative z-20 flex items-center justify-center">
           <AgentCard
-            agent={agentA}
+            agent={earner}
             color="emerald"
-            reputationLabel="Flawless"
+            reputationLabel={earner.reputationLabel}
             active={
               flowPhase === "invoice-issuing" ||
               flowPhase === "earner-receiving"
@@ -124,7 +210,6 @@ export default function AgentEconomy({
         <div className="relative z-20 flex items-center justify-center">
           <EmeiEngine
             flowPhase={flowPhase}
-            presented={presented}
             pendingAmount={pendingFlowAmount}
           />
         </div>
@@ -132,9 +217,9 @@ export default function AgentEconomy({
         {/* Payer - Right (sends) */}
         <div className="relative z-20 flex items-center justify-center">
           <AgentCard
-            agent={agentB}
+            agent={payer}
             color="orange"
-            reputationLabel="Flawless"
+            reputationLabel={payer.reputationLabel}
             active={flowPhase === "payer-authorizing"}
             statusLabel={
               flowPhase === "invoice-issuing"
@@ -154,10 +239,8 @@ export default function AgentEconomy({
                 ? pendingFlowAmount
                 : 0
             }
-            mandates={[
-              { id: "MND-001", limit: "1,000 mUSD", active: flowPhase === "payer-authorizing" },
-              { id: "MND-002", limit: "500 mUSD", active: false },
-            ]}
+            mandateDetails={payer.mandate}
+            flowPhase={flowPhase}
           />
         </div>
       </div>
@@ -165,11 +248,7 @@ export default function AgentEconomy({
   );
 }
 
-interface MandateRow {
-  id: string;
-  limit: string;
-  active: boolean;
-}
+/* ── Subcomponents ── */
 
 function AgentCard({
   agent,
@@ -179,16 +258,18 @@ function AgentCard({
   statusLabel,
   credit,
   debit,
-  mandates,
+  mandateDetails,
+  flowPhase,
 }: {
-  agent: Agent;
+  agent: AgentProfile;
   color: "orange" | "emerald";
   reputationLabel: string;
   active: boolean;
   statusLabel: string;
   credit: number;
   debit: number;
-  mandates?: MandateRow[];
+  mandateDetails?: PayerProfile["mandate"];
+  flowPhase?: FlowPhase;
 }) {
   const colorMap = {
     orange: {
@@ -217,7 +298,7 @@ function AgentCard({
           : { scale: 1, boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
       }
       transition={{ duration: 0.4 }}
-      className={`relative w-full max-w-[280px] bg-white rounded-2xl border border-zinc-200/80 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.08)] ${active ? `ring-2 ${colorMap.ring}` : ""}`}
+      className={`relative w-full max-w-[280px] bg-white/80 backdrop-blur-xl rounded-2xl border border-white/40 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_-8px_rgba(0,0,0,0.08)] ${active ? `ring-2 ${colorMap.ring}` : ""}`}
     >
       {/* Avatar + Identity */}
       <div className="flex items-center gap-3">
@@ -335,36 +416,43 @@ function AgentCard({
         </div>
       </div>
 
-      {/* Mandates list (only on Payer card) */}
-      {mandates && (
-        <div className="mt-3 space-y-1.5">
-          <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-            Standing Mandates
+      {/* Mandate Box - Show detailed spent fields */}
+      {mandateDetails && (
+        <div className="mt-3 bg-zinc-50 border border-zinc-150 rounded-xl p-3 space-y-2">
+          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            Reputation-Gated Mandate
           </p>
-          {mandates.map((m) => (
-            <div
-              key={m.id}
-              className={`flex items-center justify-between rounded-md border px-2 py-1.5 transition-colors duration-300 ${
-                m.active
-                  ? "bg-orange-50 border-orange-200"
-                  : "bg-zinc-50 border-zinc-100"
-              }`}
-            >
-              <div className="flex items-center gap-1.5">
-                <motion.span
-                  className={`w-1.5 h-1.5 rounded-full ${m.active ? "bg-orange-500" : "bg-zinc-300"}`}
-                  animate={m.active ? { scale: [1, 1.4, 1] } : {}}
-                  transition={{ duration: 1, repeat: Infinity }}
-                />
-                <span className="text-[10px] font-semibold text-zinc-700 font-[family-name:var(--font-jetbrains)]">
-                  {m.id}
-                </span>
-              </div>
-              <span className="text-[10px] text-zinc-500 font-[family-name:var(--font-jetbrains)] tabular-nums">
-                {m.limit}
-              </span>
+          
+          <div className="grid grid-cols-3 gap-1.5 text-center">
+            <div className="bg-white border border-zinc-200/80 rounded-md py-1 px-0.5">
+              <p className="text-[8px] text-zinc-400 font-semibold uppercase">Limit</p>
+              <p className="text-[10px] font-bold text-zinc-800 font-[family-name:var(--font-jetbrains)] mt-0.5">
+                {mandateDetails.spend_cap_musd}
+              </p>
             </div>
-          ))}
+            
+            <div className={`border rounded-md py-1 px-0.5 transition-colors duration-300 ${
+              flowPhase === "payer-authorizing" || flowPhase === "engine-processing"
+                ? "bg-orange-50 border-orange-200"
+                : "bg-white border-zinc-200/80"
+            }`}>
+              <p className={`text-[8px] font-semibold uppercase ${
+                flowPhase === "payer-authorizing" || flowPhase === "engine-processing" ? "text-orange-500" : "text-zinc-400"
+              }`}>Spent</p>
+              <p className={`text-[10px] font-bold font-[family-name:var(--font-jetbrains)] mt-0.5 ${
+                flowPhase === "payer-authorizing" || flowPhase === "engine-processing" ? "text-orange-700" : "text-zinc-800"
+              }`}>
+                {mandateDetails.spent_musd}
+              </p>
+            </div>
+
+            <div className="bg-white border border-zinc-200/80 rounded-md py-1 px-0.5">
+              <p className="text-[8px] text-zinc-400 font-semibold uppercase">Left</p>
+              <p className="text-[10px] font-bold text-zinc-800 font-[family-name:var(--font-jetbrains)] mt-0.5">
+                {mandateDetails.remaining_cap_musd}
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -386,16 +474,13 @@ function AgentCard({
 
 function EmeiEngine({
   flowPhase,
-  presented,
   pendingAmount,
 }: {
   flowPhase: FlowPhase;
-  presented: number;
   pendingAmount: number;
 }) {
   const active = flowPhase !== "idle";
   const processing = flowPhase === "engine-processing";
-  // Mandate light comes on when payer authorizes, reputation comes on during processing
   const mandateOk =
     flowPhase === "payer-authorizing" ||
     flowPhase === "engine-processing" ||
@@ -485,10 +570,10 @@ function EmeiEngine({
           <div className="mt-4 pt-4 border-t border-white/10 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
-                Pending
+                System Status
               </span>
-              <span className="text-xs font-bold text-white font-[family-name:var(--font-jetbrains)] tabular-nums">
-                {presented}
+              <span className="text-xs font-bold text-emerald-400 tracking-wide font-[family-name:var(--font-jetbrains)] uppercase">
+                Active
               </span>
             </div>
             <AnimatePresence>
@@ -566,12 +651,6 @@ function FlowConnector({
   amount: number;
   invoiceId: number | null;
 }) {
-  // Layout: Earner (left, x≈280) <-- Engine (center, x≈500) <-- Payer (right, x≈720)
-  // Phase 1: Earner issues invoice to Engine (document packet, 280 -> 420)
-  // Phase 2: Payer authorizes payment (orange coin, 720 -> 580)
-  // Phase 3: Engine processes (no packet, just core pulse)
-  // Phase 4: Engine disburses to Earner (green coin, 420 -> 280)
-
   const badgeText = (() => {
     if (flowPhase === "invoice-issuing")
       return `Invoice #${invoiceId ?? ""} · presenting to engine`;
@@ -616,70 +695,68 @@ function FlowConnector({
           {flowPhase === "invoice-issuing" && (
             <motion.g
               key="invoice-packet"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ x: 280, y: 200, opacity: 0 }}
+              animate={{ x: 420, y: 200, opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{
+                x: { duration: 2.8, ease: [0.25, 1, 0.5, 1] },
+                opacity: { duration: 0.5, ease: "easeOut" }
+              }}
             >
-              <motion.g
-                initial={{ x: 280, y: 200 }}
-                animate={{ x: 420, y: 200 }}
-                transition={{ duration: 1.4, ease: "easeInOut" }}
-              >
-                {/* Document outline */}
-                <rect
-                  x="-10"
-                  y="-12"
-                  width="20"
-                  height="24"
-                  rx="2"
-                  fill="white"
-                  stroke="rgb(16, 185, 129)"
-                  strokeWidth="2"
+              {/* Document outline */}
+              <rect
+                x="-10"
+                y="-12"
+                width="20"
+                height="24"
+                rx="2"
+                fill="white"
+                stroke="rgb(16, 185, 129)"
+                strokeWidth="2"
+              />
+              {/* Folded corner */}
+              <path
+                d="M 4 -12 L 10 -6 L 4 -6 Z"
+                fill="rgb(16, 185, 129)"
+                fillOpacity="0.2"
+              />
+              {/* Lines representing text */}
+              <line
+                x1="-6"
+                y1="-2"
+                x2="6"
+                y2="-2"
+                stroke="rgb(16, 185, 129)"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="-6"
+                y1="2"
+                x2="6"
+                y2="2"
+                stroke="rgb(16, 185, 129)"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+              />
+              <line
+                x1="-6"
+                y1="6"
+                x2="2"
+                y2="6"
+                stroke="rgb(16, 185, 129)"
+                strokeWidth="1.2"
+                strokeLinecap="round"
+              />
+              {/* Soft glow */}
+              <circle r="20" fill="rgb(16, 185, 129)" opacity="0.18">
+                <animate
+                  attributeName="r"
+                  values="16;24;16"
+                  dur="0.9s"
+                  repeatCount="indefinite"
                 />
-                {/* Folded corner */}
-                <path
-                  d="M 4 -12 L 10 -6 L 4 -6 Z"
-                  fill="rgb(16, 185, 129)"
-                  fillOpacity="0.2"
-                />
-                {/* Lines representing text */}
-                <line
-                  x1="-6"
-                  y1="-2"
-                  x2="6"
-                  y2="-2"
-                  stroke="rgb(16, 185, 129)"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="-6"
-                  y1="2"
-                  x2="6"
-                  y2="2"
-                  stroke="rgb(16, 185, 129)"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="-6"
-                  y1="6"
-                  x2="2"
-                  y2="6"
-                  stroke="rgb(16, 185, 129)"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                />
-                {/* Soft glow */}
-                <circle r="20" fill="rgb(16, 185, 129)" opacity="0.18">
-                  <animate
-                    attributeName="r"
-                    values="16;24;16"
-                    dur="0.9s"
-                    repeatCount="indefinite"
-                  />
-                </circle>
-              </motion.g>
+              </circle>
             </motion.g>
           )}
         </AnimatePresence>
@@ -689,27 +766,25 @@ function FlowConnector({
           {flowPhase === "payer-authorizing" && (
             <motion.g
               key="payer-packet"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ x: 720, y: 200, opacity: 0 }}
+              animate={{ x: 580, y: 200, opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{
+                x: { duration: 2.8, ease: [0.25, 1, 0.5, 1] },
+                opacity: { duration: 0.5, ease: "easeOut" }
+              }}
             >
-              <motion.circle
+              <circle
                 r="8"
                 fill="rgb(249, 115, 22)"
-                initial={{ cx: 720, cy: 200 }}
-                animate={{ cx: 580, cy: 200 }}
-                transition={{ duration: 1.4, ease: "easeInOut" }}
               />
-              <motion.circle
+              <circle
                 r="14"
                 fill="rgb(249, 115, 22)"
                 opacity="0.3"
-                initial={{ cx: 720, cy: 200 }}
-                animate={{ cx: 580, cy: 200 }}
-                transition={{ duration: 1.4, ease: "easeInOut" }}
               >
                 <animate attributeName="r" values="10;18;10" dur="0.8s" repeatCount="indefinite" />
-              </motion.circle>
+              </circle>
             </motion.g>
           )}
         </AnimatePresence>
@@ -719,27 +794,25 @@ function FlowConnector({
           {flowPhase === "earner-receiving" && (
             <motion.g
               key="earner-packet"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ x: 420, y: 200, opacity: 0 }}
+              animate={{ x: 280, y: 200, opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{
+                x: { duration: 2.8, ease: [0.25, 1, 0.5, 1] },
+                opacity: { duration: 0.5, ease: "easeOut" }
+              }}
             >
-              <motion.circle
+              <circle
                 r="8"
                 fill="rgb(16, 185, 129)"
-                initial={{ cx: 420, cy: 200 }}
-                animate={{ cx: 280, cy: 200 }}
-                transition={{ duration: 1.4, ease: "easeInOut" }}
               />
-              <motion.circle
+              <circle
                 r="14"
                 fill="rgb(16, 185, 129)"
                 opacity="0.3"
-                initial={{ cx: 420, cy: 200 }}
-                animate={{ cx: 280, cy: 200 }}
-                transition={{ duration: 1.4, ease: "easeInOut" }}
               >
                 <animate attributeName="r" values="10;18;10" dur="0.8s" repeatCount="indefinite" />
-              </motion.circle>
+              </circle>
             </motion.g>
           )}
         </AnimatePresence>
