@@ -10,11 +10,11 @@ export default function Header() {
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           <Image
-            src="/Logo.svg"
+            src="/EmeiLogo.svg"
             alt=""
-            width={22}
-            height={22}
-            className="w-[22px] h-[22px] invert"
+            width={26}
+            height={26}
+            className="w-[26px] h-[26px] invert"
             priority
           />
           <span className="text-xl font-bold tracking-tight text-white">

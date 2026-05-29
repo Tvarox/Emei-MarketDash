@@ -495,7 +495,7 @@ function EmeiEngine({
       className="relative w-full max-w-[260px]"
     >
       <motion.div
-        className="absolute inset-0 rounded-3xl bg-gradient-to-br from-orange-400/20 via-amber-300/10 to-emerald-400/20 blur-2xl -z-10"
+        className="absolute inset-0 rounded-3xl bg-gradient-to-br from-zinc-400/20 via-zinc-300/10 to-emerald-400/20 blur-2xl -z-10"
         animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.05, 1] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -505,7 +505,7 @@ function EmeiEngine({
           className="absolute inset-0 opacity-30"
           style={{
             background:
-              "radial-gradient(circle at 50% 0%, rgba(249,115,22,0.4), transparent 60%)",
+              "radial-gradient(circle at 50% 0%, rgba(161,161,170,0.4), transparent 60%)",
           }}
         />
         <div
@@ -521,25 +521,25 @@ function EmeiEngine({
           <div className="flex items-center justify-center mb-4">
             <div className="relative">
               <motion.div
-                className="absolute inset-0 rounded-2xl bg-orange-500 blur-xl"
+                className="absolute inset-0 rounded-2xl bg-zinc-400 blur-xl"
                 animate={{
-                  opacity: processing ? [0.6, 1, 0.6] : [0.3, 0.5, 0.3],
+                  opacity: processing ? [0.4, 0.7, 0.4] : [0.2, 0.35, 0.2],
                   scale: processing ? [1, 1.2, 1] : [1, 1.05, 1],
                 }}
                 transition={{ duration: 1.2, repeat: Infinity }}
               />
-              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-xl shadow-orange-500/40">
+              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-zinc-700 to-zinc-800 border border-zinc-600/50 flex items-center justify-center shadow-xl shadow-zinc-900/40">
                 <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  width="28"
+                  height="22"
+                  viewBox="0 0 1402 1122"
+                  fill="white"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  <g transform="translate(0,1122) scale(0.1,-0.1)" stroke="none">
+                    <path d="M6385 9069 c-152 -20 -336 -88 -464 -174 -55 -36 -405 -379 -1442 -1414 l-1369 -1366 -41 -88 c-71 -154 -69 -113 -69 -1173 0 -1031 1 -1043 55 -1187 30 -82 80 -183 107 -217 41 -53 542 -553 1718 -1715 516 -511 546 -538 655 -591 163 -79 44 -74 1825 -74 l1588 0 63 33 c67 34 81 49 783 817 138 151 342 373 453 492 111 120 210 232 219 250 34 66 13 144 -47 175 -19 10 -518 13 -2322 13 l-2298 0 -462 467 c-254 257 -692 699 -974 982 l-511 515 81 87 c250 267 1173 1234 1618 1695 467 483 522 526 759 585 l95 24 1250 5 1250 5 47 23 c46 23 153 130 319 320 151 173 717 798 1004 1107 198 215 199 216 199 280 1 64 -24 104 -75 122 -41 14 -3900 16 -4014 2z"/>
+                    <path d="M6762 5925 c-35 -8 -77 -23 -95 -34 -31 -19 -346 -333 -648 -646 -200 -207 -778 -821 -802 -852 -30 -37 -33 -110 -7 -151 42 -67 -110 -63 2053 -60 l1962 3 79 28 c134 47 190 92 476 383 146 148 453 459 684 691 230 232 427 434 437 450 38 58 17 147 -44 180 -30 17 -141 18 -2032 20 -1677 2 -2010 0 -2063 -12z"/>
+                  </g>
                 </svg>
               </div>
             </div>
