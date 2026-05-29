@@ -16,7 +16,7 @@ interface AgentProfile {
 
 const EARNERS: Record<string, AgentProfile> = {
   "compute-bot": {
-    name: "compute-bot",
+    name: "Compute Agent",
     role: "Earner (GPU Compute Provider)",
     address: "0x34fd...f561",
     balance: 30.00,
@@ -24,7 +24,7 @@ const EARNERS: Record<string, AgentProfile> = {
     reputationLabel: "Excellent",
   },
   "analytics-bot": {
-    name: "analytics-bot",
+    name: "Analytics Agent",
     role: "Earner (Data Analytics Service)",
     address: "0x19ba...c34b",
     balance: 430.00,
@@ -32,7 +32,7 @@ const EARNERS: Record<string, AgentProfile> = {
     reputationLabel: "Flawless",
   },
   "signal-bot": {
-    name: "signal-bot",
+    name: "Signal Agent",
     role: "Earner (Trading Signals Agent)",
     address: "0x277d...d735",
     balance: 585.00,
@@ -51,7 +51,7 @@ interface PayerProfile extends AgentProfile {
 
 const PAYERS: Record<string, PayerProfile> = {
   "trader-bot": {
-    name: "trader-bot",
+    name: "Trader Agent",
     role: "Payer (Arbitrage Trader)",
     address: "0xf980...591b",
     balance: 745.00,
@@ -64,7 +64,7 @@ const PAYERS: Record<string, PayerProfile> = {
     },
   },
   "research-bot": {
-    name: "research-bot",
+    name: "Research Agent",
     role: "Payer (LLM Researcher Agent)",
     address: "0x7a8c...82ea",
     balance: 612.00,
@@ -146,20 +146,20 @@ export default function AgentEconomy() {
           </p>
         </div>
 
-        {/* Dynamic Bot Selectors */}
+        {/* Dynamic Agent Selectors */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-0.5 border border-zinc-200/40">
-            {(["compute-bot", "analytics-bot", "signal-bot"] as const).map((botName) => (
+            {(["compute-bot", "analytics-bot", "signal-bot"] as const).map((agentKey) => (
               <button
-                key={botName}
-                onClick={() => setSelectedEarner(botName)}
+                key={agentKey}
+                onClick={() => setSelectedEarner(agentKey)}
                 className={`text-[10px] font-bold px-2.5 py-1 rounded-md transition-all duration-200 ${
-                  selectedEarner === botName
+                  selectedEarner === agentKey
                     ? "bg-white text-zinc-900 shadow-sm"
                     : "text-zinc-500 hover:text-zinc-700"
                 }`}
               >
-                {botName === "compute-bot" ? "compute-bot" : botName === "analytics-bot" ? "analytics-bot" : "signal-bot"}
+                {agentKey === "compute-bot" ? "Compute Agent" : agentKey === "analytics-bot" ? "Analytics Agent" : "Signal Agent"}
               </button>
             ))}
           </div>

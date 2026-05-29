@@ -14,16 +14,28 @@ import {
 import { motion } from "framer-motion";
 import type { AgentResponse } from "@/lib/api";
 
+function formatAgentName(name: string | null | undefined): string {
+  if (!name) return "";
+  const mapping: Record<string, string> = {
+    "signal-bot": "Signal Agent",
+    "trader-bot": "Trader Agent",
+    "compute-bot": "Compute Agent",
+    "analytics-bot": "Analytics Agent",
+    "research-bot": "Research Agent",
+  };
+  return mapping[name.toLowerCase()] ?? name;
+}
+
 /* ── Palette ── */
 const AGENT_COLORS: Record<string, { fill: string; stroke: string }> = {
-  "signal-bot":    { fill: "#ef4444", stroke: "#dc2626" },    // red-500 / 600
-  "analytics-bot": { fill: "#3b82f6", stroke: "#2563eb" },    // blue-500 / 600
-  "compute-bot":   { fill: "#22c55e", stroke: "#16a34a" },    // green-500 / 600
-  "trader-bot":    { fill: "#f97316", stroke: "#ea580c" },     // orange-500 / 600
-  "research-bot":  { fill: "#a855f7", stroke: "#9333ea" },     // purple-500 / 600
+  "Signal Agent":    { fill: "#ef4444", stroke: "#dc2626" },    // red-500 / 600
+  "Analytics Agent": { fill: "#3b82f6", stroke: "#2563eb" },    // blue-500 / 600
+  "Compute Agent":   { fill: "#22c55e", stroke: "#16a34a" },    // green-500 / 600
+  "Trader Agent":    { fill: "#f97316", stroke: "#ea580c" },     // orange-500 / 600
+  "Research Agent":  { fill: "#a855f7", stroke: "#9333ea" },     // purple-500 / 600
 };
 
-const AGENT_ORDER = ["signal-bot", "analytics-bot", "compute-bot", "trader-bot", "research-bot"];
+const AGENT_ORDER = ["Signal Agent", "Analytics Agent", "Compute Agent", "Trader Agent", "Research Agent"];
 
 /* ── Types ── */
 interface DataPoint {
@@ -68,7 +80,7 @@ function generateHistory(
   const targets: { label: string; value: number }[] = [];
   for (const agent of agents) {
     const val = parseFloat(agent.vault_balance_musd) || 0;
-    targets.push({ label: agent.label, value: val });
+    targets.push({ label: formatAgentName(agent.label), value: val });
   }
 
   for (let i = 0; i <= numPoints; i++) {
@@ -198,7 +210,7 @@ export default function VaultVolumeChart({ agents }: VaultVolumeChartProps) {
   const activeAgents = useMemo(
     () =>
       AGENT_ORDER.filter((label) => {
-        const agent = agents.find((a) => a.label === label);
+        const agent = agents.find((a) => formatAgentName(a.label) === label);
         return agent && parseFloat(agent.vault_balance_musd) > 0;
       }),
     [agents]
@@ -235,7 +247,7 @@ export default function VaultVolumeChart({ agents }: VaultVolumeChartProps) {
     const point: DataPoint = { time: now, label };
 
     for (const agent of agents) {
-      point[agent.label] = parseFloat(agent.vault_balance_musd) || 0;
+      point[formatAgentName(agent.label)] = parseFloat(agent.vault_balance_musd) || 0;
     }
 
     // Clone to avoid mutating a frozen array (React strict mode)
@@ -272,7 +284,7 @@ export default function VaultVolumeChart({ agents }: VaultVolumeChartProps) {
               Vault Volume by Agent
             </h3>
             <p className="text-[10px] font-medium text-zinc-500 mt-0.5">
-              Individual vault balances for each active bot
+              Individual vault balances for each active agent
             </p>
           </div>
 

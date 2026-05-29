@@ -18,14 +18,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Background: black top 35%, white rest */}
       <div className="fixed inset-0 -z-10 bg-white" />
       <div className="fixed inset-x-0 top-0 -z-10 h-[40vh] bg-zinc-950" />
 
       <Header />
 
       <main className="flex-1 max-w-[1440px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-10 space-y-8">
-        {/* Hero Headline — always full-width on top */}
         <section className="space-y-3">
           <p className="text-xs font-semibold text-orange-500 uppercase tracking-[0.18em]">
             EMEI Protocol · Live Monitor
@@ -42,9 +40,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Two-column layout: left scrolls, right sticky */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-          {/* ── RIGHT COLUMN (cards) — first in DOM for mobile, pushed right on desktop ── */}
           <div className="w-full lg:w-[280px] xl:w-[300px] shrink-0 lg:order-last lg:sticky lg:top-[5rem] lg:h-[calc(100vh-6rem)] overflow-hidden">
             <ExecutiveSummary
               tvl={sim.tvl}
@@ -58,7 +54,6 @@ export default function Home() {
             />
           </div>
 
-          {/* ── LEFT COLUMN (scrollable) ── */}
           <div className="flex-1 min-w-0 space-y-8">
             <VaultVolumeChart agents={sim.agents} />
 
@@ -76,7 +71,6 @@ export default function Home() {
               <AgentEconomy />
             </div>
 
-            {/* Footer */}
             <footer className="pt-6 pb-2 flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-200/60 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <div

@@ -74,14 +74,14 @@ export function useProtocolSimulation(): ProtocolState & {
     tvl: 28.0,
     gmvSettled: 23.0,
     agentA: {
-      name: "signal-bot",
+      name: "Signal Agent",
       role: "Earner",
       address: "0x277D...d735",
       balance: 29.0,
       reputation: 10000,
     },
     agentB: {
-      name: "trader-bot",
+      name: "Trader Agent",
       role: "Payer",
       address: "0xf980...591B",
       balance: PAYER_INITIAL_BALANCE,

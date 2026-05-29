@@ -225,6 +225,18 @@ function findAgent(agents: AgentResponse[], label: string): AgentResponse | unde
   return agents.find((a) => a.label === label);
 }
 
+function formatAgentName(name: string | null | undefined): string {
+  if (!name) return "";
+  const mapping: Record<string, string> = {
+    "signal-bot": "Signal Agent",
+    "trader-bot": "Trader Agent",
+    "compute-bot": "Compute Agent",
+    "analytics-bot": "Analytics Agent",
+    "research-bot": "Research Agent",
+  };
+  return mapping[name.toLowerCase()] ?? name;
+}
+
 export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: () => void } {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [agents, setAgents] = useState<AgentResponse[]>([]);
@@ -432,7 +444,7 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
     : 100;
 
   const agentA = {
-    name: signalBot?.label ?? "signal-bot",
+    name: formatAgentName(signalBot?.label ?? "signal-bot"),
     role: "Earner",
     address: shortAddr(signalBot?.address),
     balance: balanceA,
@@ -446,7 +458,7 @@ export function useProtocolLive(): ProtocolState & LiveExtras & { triggerNow: ()
     : 100;
 
   const agentB = {
-    name: traderBot?.label ?? "trader-bot",
+    name: formatAgentName(traderBot?.label ?? "trader-bot"),
     role: "Payer",
     address: shortAddr(traderBot?.address),
     balance: balanceB,
